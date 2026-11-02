@@ -1,0 +1,3 @@
+term,mean_ratio,ci95_low,ci95_high,bootstrap_replicates_requested,bootstrap_replicates_converged,n,adjustment,interpretation
+data_shared,1.123053240959817,0.9905102868322472,1.2712685413950284,500,500,3424,Publication year and PLOS Primary_Topic_Field (fields with sample n<100 pooled); sampling-stratum bootstrap,Adjusted association; not a causal effect
+code_shared,1.1873301455020986,1.0511396443786667,1.3352695951686164,500,500,3424,Publication year and PLOS Primary_Topic_Field (fields with sample n<100 pooled); sampling-stratum bootstrap,Adjusted association; not a causal effect

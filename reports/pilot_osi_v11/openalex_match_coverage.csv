@@ -1,0 +1,17 @@
+Publication_Year,Data_Shared,Code_Shared,sampled,openalex_matched
+2018,False,False,250,250
+2018,False,True,108,108
+2018,True,False,250,250
+2018,True,True,250,250
+2019,False,False,250,250
+2019,False,True,89,89
+2019,True,False,250,250
+2019,True,True,250,250
+2020,False,False,250,250
+2020,False,True,91,91
+2020,True,False,250,250
+2020,True,True,250,250
+2021,False,False,250,250
+2021,False,True,136,136
+2021,True,False,250,250
+2021,True,True,250,250

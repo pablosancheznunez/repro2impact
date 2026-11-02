@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+results/*.csv
+results/*.parquet
+data/raw/
+data/processed/
+data/pilot/osi_v11_plos_sample.csv
+data/pilot/openalex_doi_input.txt
+.DS_Store
