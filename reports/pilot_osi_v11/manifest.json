@@ -1,0 +1,30 @@
+{
+  "source": "PLOS Open Science Indicators v11",
+  "source_doi": "10.6084/m9.figshare.21687686.v11",
+  "archive_sha256": "1c15e54c8a79015e92b501bc651da646d6b1100dbab25079b48a01559c7e1d47",
+  "archive_url": "https://ndownloader.figshare.com/files/66066221",
+  "scope": "PLOS research articles with 2018-2021 publication year and data/code sharing values",
+  "sampling": {
+    "seed": 20261102,
+    "n_per_year_data_code_stratum": 125,
+    "strata": [
+      "Publication_Year",
+      "Data_Shared",
+      "Code_Shared"
+    ]
+  },
+  "citation_source": "OpenAlex works API, cited_by_count",
+  "citation_snapshot_date": "2026-11-02",
+  "api_batch_size": 50,
+  "bootstrap_replicates": 1000,
+  "generated_utc": "2026-11-02T09:53:55.042565+00:00",
+  "sample_rows": 1913,
+  "openalex_matched_rows": 1913,
+  "limitations": [
+    "PLOS corpus only; publisher-specific and research-article selection bias",
+    "OSI flags are automated indicators, not direct reproducibility audits",
+    "OpenAlex current citation counts, year-standardized but not field-adjusted",
+    "Observational association; no causal interpretation",
+    "Comparator/altmetric/policy outcomes are not part of this citation pilot"
+  ]
+}

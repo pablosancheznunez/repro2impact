@@ -1,6 +1,6 @@
 # REPRO2IMPACT
 
-Open research project scaffold for studying how article-level transparency practices relate to scholarly and societal attention. This repository contains the preregistration draft, a coding schema, a reproducible analysis pipeline, and an interactive dashboard. It contains no empirical results: the project PDF supplies no article-level dataset, source licenses, or approved sampling frame.
+Open research project studying how article-level transparency practices relate to scholarly and societal attention. This repository contains a preregistration draft, coding schema, reproducible analysis pipeline, interactive dashboard, and an exploratory pilot on PLOS Open Science Indicators v11. The pilot extends prior work; it is not confirmatory or causal.
 
 ## Start here
 
@@ -37,4 +37,8 @@ OpenAlex can be considered as an open metadata source, subject to a documented q
 
 ## Current project status
 
-Implementation scaffold complete. Empirical execution awaits the team decisions and inputs listed in `docs/protocol.md` (discipline/sample, time window, operational source access, coding/validation, start date and approvals).
+An exploratory PLOS OSI v11 citation pilot (2018–2021; n=1,913; 100% DOI match) is available in `reports/pilot_osi_v11/`. See `reports/pilot_osi_v11/OUTCOMES_ES.md` for Spanish presentation wording and limitations. The larger multidisciplinary study still requires the design and institutional decisions listed in `docs/protocol.md`.
+
+## Pilot outcomes
+
+The exploratory weighted Poisson model found adjusted citation mean ratios of 1.18 for data sharing (95% CI 1.00–1.40) and 1.24 for code sharing (1.01–1.47), adjusted for publication year and PLOS topic field. These are observational associations, not causal effects. Full method, caveats, and citations: `reports/pilot_osi_v11/OUTCOMES_ES.md`. The full source archive and text-rich intermediates are excluded from Git; the public derived sample is minimized.

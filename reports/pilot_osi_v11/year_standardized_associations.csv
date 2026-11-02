@@ -1,0 +1,3 @@
+practice,year_standardized_mean_yes,year_standardized_mean_no,difference_citations,difference_ci_low,difference_ci_high,ratio_yes_vs_no,ratio_ci_low,ratio_ci_high,bootstrap_replicates,note
+Data_Shared,34.724375746435086,28.806015969117716,5.91835977731737,1.1373017505524783,11.69377525607922,1.2054556861893817,1.037252519062871,1.4140789208572688,1000,Descriptive association standardized to the cohort publication-year distribution; not causal and not adjusted for field.
+Code_Shared,41.69008866561586,32.113144325747044,9.576944339868817,3.411827720365392,15.869204592056395,1.2982250583350818,1.1002539849702866,1.5243662501900934,1000,Descriptive association standardized to the cohort publication-year distribution; not causal and not adjusted for field.
