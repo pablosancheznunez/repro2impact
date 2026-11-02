@@ -6,7 +6,7 @@
   "scope": "PLOS research articles with 2018-2021 publication year and data/code sharing values",
   "sampling": {
     "seed": 20261102,
-    "n_per_year_data_code_stratum": 125,
+    "n_per_year_data_code_stratum": 250,
     "strata": [
       "Publication_Year",
       "Data_Shared",
@@ -17,14 +17,15 @@
   "citation_snapshot_date": "2026-11-02",
   "api_batch_size": 50,
   "bootstrap_replicates": 1000,
-  "generated_utc": "2026-11-02T09:53:55.042565+00:00",
-  "sample_rows": 1913,
-  "openalex_matched_rows": 1913,
+  "generated_utc": "2026-11-02T10:09:10.317217+00:00",
+  "sample_rows": 3424,
+  "openalex_matched_rows": 3424,
+  "license": "CC BY 4.0 (source dataset); derived sample contains DOI and article-level indicators only",
   "limitations": [
     "PLOS corpus only; publisher-specific and research-article selection bias",
     "OSI flags are automated indicators, not direct reproducibility audits",
-    "OpenAlex current citation counts, year-standardized but not field-adjusted",
+    "OpenAlex citation counts retrieved on 2026-11-02; year- and topic-adjusted model",
     "Observational association; no causal interpretation",
-    "Comparator/altmetric/policy outcomes are not part of this citation pilot"
+    "Comparator, altmetric and policy outcomes are not part of this citation pilot"
   ]
 }

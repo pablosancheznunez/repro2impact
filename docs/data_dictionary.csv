@@ -7,8 +7,8 @@ citations,integer,yes,Count from the chosen source at the defined extraction dat
 data_status,category,yes,Article-level data transparency code,yes|no|unclear|not_applicable
 code_status,category,yes,Article-level code transparency code,yes|no|unclear|not_applicable
 methods_status,category,yes,Methods/materials documentation code,yes|no|unclear|not_applicable
-prereg_status,category,yes,Public prospective protocol code,yes|no|unclear|not_applicable
-journal_policy_status,category,no,Journal policy at the relevant date; separate contextual variable,yes|no|unclear|not_applicable
+journal_policy_status,category,yes,Editorial policy/certification effective for the journal when the article was handled,yes|no|unclear|not_applicable
+prereg_status,category,no,Public prospective protocol sub-indicator within methods documentation,yes|no|unclear|not_applicable
 open_access,boolean,no,Open access status per frozen source definition,true|false|blank
 international_collaboration,boolean,no,At least two countries in affiliations per frozen rule,true|false|blank
 altmetric_attention,numeric,no,Value from a named source and date; do not mix vendors,Non-negative number

@@ -21,7 +21,7 @@ import pandas as pd
 
 SEED = 20261102
 YEARS = [2018, 2019, 2020, 2021]
-N_PER_STRATUM = 125
+N_PER_STRATUM = 250
 BATCH_SIZE = 50
 N_BOOT = 1000
 FIGSHARE_ZIP = "https://ndownloader.figshare.com/files/66066221"
@@ -279,6 +279,12 @@ def main() -> None:
     openalex_path = PILOT_DIR / "openalex_citations_asof_2026-11-02.csv"
     if openalex_path.exists():
         openalex = pd.read_csv(openalex_path)
+        known = set(openalex["doi_norm"].dropna().astype(str))
+        missing_dois = [doi for doi in dois if doi not in known]
+        if missing_dois:
+            new_records = query_openalex(missing_dois)
+            openalex = pd.concat([openalex, new_records], ignore_index=True).drop_duplicates("doi_norm")
+            openalex.to_csv(openalex_path, index=False)
     else:
         openalex = query_openalex(dois)
         openalex.to_csv(openalex_path, index=False)

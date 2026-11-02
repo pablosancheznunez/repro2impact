@@ -1,7 +1,7 @@
 # Protocolo de investigación REPRO2IMPACT
 
 **Versión:** borrador operativo 0.1 · 2 de noviembre de 2026  
-**Estado:** preregistro no enviado; completar los campos `[DECIDIR]` y aprobar por el equipo antes de consultar resultados o fijar hipótesis finales.
+**Estado:** protocolo de trabajo actualizado tras un piloto exploratorio; no es un preregistro. Congelar pregunta, población, exposiciones y outcomes con el equipo antes del análisis confirmatorio.
 
 ## Pregunta y alcance
 
@@ -33,9 +33,9 @@ Estudio observacional multidisciplinar; unidad primaria: artículo. El diseño p
 
 ## Exposición primaria: transparencia de artefactos
 
-Cuatro dimensiones binarias codificadas `yes`, `no`, `unclear` o `not_applicable`: datos, código, documentación de métodos/materiales y preregistro/protocolo. `yes` requiere evidencia accesible enlazada al artículo o a un repositorio persistente. `no` requiere búsqueda documentada sin evidencia localizada. `unclear` indica evidencia insuficiente o enlace fallido y no se convierte en cero. `not_applicable` requiere motivo documentado.
+El índice provisional de la memoria tiene cuatro dimensiones binarias `yes`, `no`, `unclear` o `not_applicable`: datos, código, documentación de métodos/materiales y política editorial/certificaciones efectivas. El preregistro/protocolo se codifica como subindicador de documentación metodológica. `yes` requiere evidencia vinculada al artículo o a su revista y vigente en el periodo pertinente. `no` requiere búsqueda documentada sin evidencia localizada. `unclear` indica evidencia ambigua o enlace fallido; no se convierte en cero. `not_applicable` requiere justificación.
 
-El índice se expresa de 0 a 1 como media de dimensiones aplicables con código determinable, siempre que haya al menos tres dimensiones determinables. Se acompaña de número de dimensiones observadas y proporción de faltantes. No se denomina “índice de reproducibilidad”. La política editorial se conserva como variable independiente a nivel de revista y periodo.
+El índice se expresa provisionalmente de 0 a 1 como media equitativa de dimensiones determinables, siempre que haya al menos tres de cuatro observadas. Se acompaña del número de dimensiones observadas y la cobertura de datos. Dado que la política es contextual y no una propiedad del artefacto del artículo, se informarán también resultados separados del componente editorial y de un subíndice de prácticas del artículo (datos, código, métodos). No llamar a ninguno “reproducibilidad verificada”. Los pesos y validez externa quedan pendientes de consulta a expertos.
 
 ## Resultados y modelos
 

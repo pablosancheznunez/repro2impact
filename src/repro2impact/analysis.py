@@ -4,7 +4,7 @@ from pathlib import Path
 import warnings
 import pandas as pd
 
-STATUS_COLUMNS = ["data_status", "code_status", "methods_status", "prereg_status"]
+STATUS_COLUMNS = ["data_status", "code_status", "methods_status", "journal_policy_status"]
 ALLOWED = {"yes", "no", "unclear", "not_applicable"}
 REQUIRED = {"work_id", "publication_year", "discipline", "citations", *STATUS_COLUMNS}
 
