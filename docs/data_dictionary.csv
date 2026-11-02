@@ -3,7 +3,8 @@ work_id,string,yes,Stable source identifier,OpenAlex Work ID or DOI
 doi,string,no,DOI in canonical form,https://doi.org/...
 publication_year,integer,yes,Year of publication,Four-digit year
 discipline,string,yes,Predefined field assigned using frozen taxonomy,Team-defined category
-citations,integer,yes,Count from the chosen source at the defined extraction date,Non-negative integer
+citations,integer,yes,Accumulated citations from the named source at extraction date,Non-negative integer
+fwci,numeric,no,OpenAlex field-weighted citation impact; type/year/subfield-normalized four-year window,Non-negative number; source coverage may be incomplete
 data_status,category,yes,Article-level data transparency code,yes|no|unclear|not_applicable
 code_status,category,yes,Article-level code transparency code,yes|no|unclear|not_applicable
 methods_status,category,yes,Methods/materials documentation code,yes|no|unclear|not_applicable

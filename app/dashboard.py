@@ -33,6 +33,8 @@ with pilot_tab:
         c2.metric("Citas medianas", "—" if view.empty else f"{view.cited_by_count.median():.0f}")
         c3.metric("Comparte datos", "—" if view.empty else f"{view.Data_Shared.mean():.1%}")
         c4.metric("Comparte código", "—" if view.empty else f"{view.Code_Shared.mean():.1%}")
+        if "fwci" in view:
+            st.metric("FWCI medio (muestra, sin ponderar)", "—" if view.fwci.notna().sum() == 0 else f"{view.fwci.mean():.2f}")
 
         if not view.empty:
             left, right = st.columns(2)
@@ -56,6 +58,16 @@ with pilot_tab:
                                       facet_col="Práctica", points=False,
                                       labels={"Compartido": "Recurso compartido", "cited_by_count": "Citas acumuladas"},
                                       title="Distribución descriptiva de citas"), use_container_width=True)
+
+            if "fwci" in view:
+                fwci_view = view.melt(id_vars=["fwci"], value_vars=["Data_Shared", "Code_Shared"],
+                                      var_name="Práctica", value_name="Compartido").dropna(subset=["fwci"])
+                fwci_view["Práctica"] = fwci_view["Práctica"].map({"Data_Shared": "Datos", "Code_Shared": "Código"})
+                fwci_view["Compartido"] = fwci_view["Compartido"].map({True: "Sí", False: "No"})
+                st.plotly_chart(px.box(fwci_view, x="Compartido", y="fwci", color="Compartido",
+                                       facet_col="Práctica", points=False,
+                                       labels={"Compartido": "Recurso compartido", "fwci": "FWCI OpenAlex"},
+                                       title="Impacto de citas normalizado (FWCI)"), use_container_width=True)
 
             st.caption("La muestra está estratificada y ponderada para el análisis. Los gráficos interactivos muestran la muestra seleccionada sin ponderación; utiliza las tablas del informe para las estimaciones poblacionales.")
             st.dataframe(view, use_container_width=True, hide_index=True)

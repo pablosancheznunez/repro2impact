@@ -79,7 +79,7 @@ def query_openalex(dois: list[str]) -> pd.DataFrame:
         values = "|".join("https://doi.org/" + d for d in chunk)
         params = urllib.parse.urlencode({
             "filter": "doi:" + values,
-            "select": "id,doi,cited_by_count,publication_year,primary_topic",
+            "select": "id,doi,cited_by_count,publication_year,primary_topic,fwci,citation_normalized_percentile,open_access",
             "per_page": "100",
         }, safe=":|/")
         url = "https://api.openalex.org/works?" + params
@@ -97,7 +97,7 @@ def query_openalex(dois: list[str]) -> pd.DataFrame:
             raise RuntimeError(f"OpenAlex batch failed at DOI {start + 1}: {error}")
         time.sleep(0.15)
     if not rows:
-        return pd.DataFrame(columns=["id", "doi_norm", "cited_by_count", "oa_year", "openalex_field"])
+        return pd.DataFrame(columns=["openalex_id", "doi_norm", "cited_by_count", "openalex_year", "openalex_field", "fwci", "fwci_percentile", "fwci_top10", "fwci_top1", "is_oa"])
     result = pd.json_normalize(rows)
     result = result.rename(columns={"id": "openalex_id", "publication_year": "openalex_year"})
     result["doi_norm"] = result["doi"].astype(str).str.lower().str.replace(
@@ -105,12 +105,68 @@ def query_openalex(dois: list[str]) -> pd.DataFrame:
     )
     result["cited_by_count"] = pd.to_numeric(result["cited_by_count"], errors="coerce")
     result["openalex_field"] = result.get("primary_topic.field.display_name")
-    return result[["openalex_id", "doi_norm", "cited_by_count", "openalex_year", "openalex_field"]].drop_duplicates("doi_norm")
+    result["fwci"] = pd.to_numeric(result.get("fwci"), errors="coerce")
+    result["fwci_percentile"] = pd.to_numeric(result.get("citation_normalized_percentile.value"), errors="coerce")
+    result["fwci_top10"] = result.get("citation_normalized_percentile.is_in_top_10_percent")
+    result["fwci_top1"] = result.get("citation_normalized_percentile.is_in_top_1_percent")
+    result["is_oa"] = result.get("open_access.is_oa")
+    return result[["openalex_id", "doi_norm", "cited_by_count", "openalex_year", "openalex_field", "fwci", "fwci_percentile", "fwci_top10", "fwci_top1", "is_oa"]].drop_duplicates("doi_norm")
 
 
 def weighted_mean(values: np.ndarray, weights: np.ndarray) -> float:
     ok = np.isfinite(values) & np.isfinite(weights) & (weights > 0)
     return float(np.average(values[ok], weights=weights[ok])) if ok.any() else float("nan")
+
+
+def summarize_fwci(joined: pd.DataFrame, population: pd.DataFrame, n_boot: int = 1000) -> pd.DataFrame:
+    """Summarize OpenAlex's four-year field-weighted impact by sharing status."""
+    keys = ["Publication_Year", "Data_Shared", "Code_Shared"]
+    all_matched = joined.merge(population, on=keys, how="left")
+    n_by_stratum = all_matched.groupby(keys, observed=True).size().rename("matched_n").reset_index()
+    all_matched = all_matched.merge(n_by_stratum, on=keys, how="left")
+    all_matched["analysis_weight"] = all_matched["population_n"] / all_matched["matched_n"]
+    data = all_matched.dropna(subset=["fwci"]).copy()
+    # The original design weights are already present in the public sample; FWCI
+    # missingness changes the observed denominator and is reported explicitly.
+    data["analysis_weight"] = pd.to_numeric(data["analysis_weight"], errors="coerce")
+    rng = np.random.default_rng(SEED + 2)
+    rows = []
+    for practice in ["Data_Shared", "Code_Shared"]:
+        groups = {}
+        point = {}
+        for level in [False, True]:
+            g = data[data[practice].eq(level)]
+            point[level] = weighted_mean(g["fwci"].to_numpy(float), g["analysis_weight"].to_numpy(float))
+            groups[level] = [part for _, part in g.groupby(keys, observed=True, sort=True)]
+        diffs, ratios = [], []
+        for _ in range(n_boot):
+            bmeans = {}
+            for level in [False, True]:
+                means, weights = [], []
+                for group in groups[level]:
+                    idx = rng.integers(0, len(group), len(group))
+                    draw = group.iloc[idx]
+                    means.append(weighted_mean(draw["fwci"].to_numpy(float), draw["analysis_weight"].to_numpy(float)))
+                    weights.append(float(draw["analysis_weight"].sum()))
+                bmeans[level] = np.average(means, weights=weights) if weights and sum(weights) else np.nan
+            diffs.append(bmeans[True] - bmeans[False])
+            ratios.append(bmeans[True] / bmeans[False] if bmeans[False] else np.nan)
+        rows.append({
+            "practice": practice,
+            "fwci_mean_yes": point[True], "fwci_mean_no": point[False],
+            "difference_yes_minus_no": point[True] - point[False],
+            "difference_ci_low": float(np.nanpercentile(diffs, 2.5)),
+            "difference_ci_high": float(np.nanpercentile(diffs, 97.5)),
+            "ratio_yes_vs_no": point[True] / point[False] if point[False] else np.nan,
+            "ratio_ci_low": float(np.nanpercentile(ratios, 2.5)),
+            "ratio_ci_high": float(np.nanpercentile(ratios, 97.5)),
+            "n_with_fwci_yes": int(data[practice].eq(True).sum()),
+            "n_with_fwci_no": int(data[practice].eq(False).sum()),
+            "weighted_coverage": float(data["analysis_weight"].sum() / population["population_n"].sum()),
+            "bootstrap_replicates": n_boot,
+            "note": "OpenAlex FWCI normalizes citations by publication type, year and subfield over a four-year citation window; weighted descriptive association, not causal.",
+        })
+    return pd.DataFrame(rows)
 
 
 def build_outcomes(joined: pd.DataFrame, population: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -280,10 +336,11 @@ def main() -> None:
     if openalex_path.exists():
         openalex = pd.read_csv(openalex_path)
         known = set(openalex["doi_norm"].dropna().astype(str))
-        missing_dois = [doi for doi in dois if doi not in known]
+        # Refresh the snapshot once if earlier runs only collected raw citation counts.
+        missing_dois = dois if "fwci" not in openalex.columns else [doi for doi in dois if doi not in known]
         if missing_dois:
             new_records = query_openalex(missing_dois)
-            openalex = pd.concat([openalex, new_records], ignore_index=True).drop_duplicates("doi_norm")
+            openalex = new_records if "fwci" not in openalex.columns else pd.concat([openalex, new_records], ignore_index=True).drop_duplicates("doi_norm")
             openalex.to_csv(openalex_path, index=False)
     else:
         openalex = query_openalex(dois)
@@ -292,7 +349,7 @@ def main() -> None:
     joined["cited_by_count"] = pd.to_numeric(joined["cited_by_count"], errors="coerce")
     # No citation record is a missing match, not a zero-citation article.
     matched = joined.dropna(subset=["cited_by_count"]).copy()
-    public_columns = ["doi", "Publication_Year", "Primary_Topic_Field", "Data_Shared", "Code_Shared", "Preprint_Match", "Protocol_Shared", "Registration_Shared", "cited_by_count", "openalex_id", "openalex_field", "analysis_weight"]
+    public_columns = ["doi", "Publication_Year", "Primary_Topic_Field", "Data_Shared", "Code_Shared", "Preprint_Match", "Protocol_Shared", "Registration_Shared", "cited_by_count", "fwci", "fwci_percentile", "fwci_top10", "fwci_top1", "is_oa", "openalex_id", "openalex_field", "analysis_weight"]
     strata = ["Publication_Year", "Data_Shared", "Code_Shared"]
     matched_n = matched.groupby(strata, observed=True).size().rename("matched_n").reset_index()
     public_sample = matched.merge(population, on=strata, how="left").merge(matched_n, on=strata, how="left")
@@ -305,6 +362,8 @@ def main() -> None:
     outcomes.to_csv(REPORT_DIR / "citation_descriptives.csv", index=False)
     standardized.to_csv(REPORT_DIR / "year_standardized_associations.csv", index=False)
     model.to_csv(REPORT_DIR / "field_adjusted_poisson.csv", index=False)
+    if "fwci" in matched.columns:
+        summarize_fwci(matched, population).to_csv(REPORT_DIR / "field_weighted_citation_impact.csv", index=False)
     yearly = frame.groupby("Publication_Year", observed=True).agg(
         articles=("DOI", "size"), data_share_rate=("Data_Shared", "mean"),
         code_share_rate=("Code_Shared", "mean"), preprint_rate=("Preprint_Match", "mean"),
@@ -325,15 +384,18 @@ def main() -> None:
         "sampling": {"seed": SEED, "n_per_year_data_code_stratum": N_PER_STRATUM,
                      "strata": ["Publication_Year", "Data_Shared", "Code_Shared"]},
         "citation_source": "OpenAlex works API, cited_by_count",
+        "citation_metrics": ["cited_by_count", "fwci", "citation_normalized_percentile"],
+        "fwci_definition": "OpenAlex field-weighted citation impact, normalized by work type, publication year and subfield over a four-year citation window",
         "citation_snapshot_date": "2026-11-02",
         "api_batch_size": BATCH_SIZE,
         "bootstrap_replicates": N_BOOT,
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "sample_rows": len(sample), "openalex_matched_rows": len(matched),
+        "fwci_rows": int(pd.to_numeric(matched.get("fwci"), errors="coerce").notna().sum()),
         "license": "CC BY 4.0 (source dataset); derived sample contains DOI and article-level indicators only",
         "limitations": ["PLOS corpus only; publisher-specific and research-article selection bias",
                         "OSI flags are automated indicators, not direct reproducibility audits",
-                        "OpenAlex citation counts retrieved on 2026-11-02; year- and topic-adjusted model",
+                        "OpenAlex citation counts retrieved on 2026-11-02; FWCI available only for a subset",
                         "Observational association; no causal interpretation",
                         "Comparator, altmetric and policy outcomes are not part of this citation pilot"],
     }

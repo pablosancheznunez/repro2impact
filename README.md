@@ -41,4 +41,4 @@ An exploratory PLOS OSI v11 citation pilot (2018–2021; n=3,424; 100% DOI match
 
 ## Pilot outcomes
 
-The exploratory weighted Poisson model found adjusted citation mean ratios of 1.12 for data sharing (95% CI 0.99–1.27) and 1.19 for code sharing (1.05–1.34), adjusted for publication year and PLOS topic field. These are observational associations, not causal effects. Full method, caveats, and citations: `reports/pilot_osi_v11/OUTCOMES_ES.md`. The full source archive and text-rich intermediates are excluded from Git; the public derived sample is minimized.
+The exploratory weighted Poisson model found adjusted citation mean ratios of 1.12 for data sharing (95% CI 0.99–1.27) and 1.19 for code sharing (1.05–1.34), adjusted for publication year and PLOS topic field. A separate weighted comparison of OpenAlex FWCI gave yes/no ratios of 1.12 (0.97–1.29) for data and 1.16 (1.02–1.32) for code. These are observational associations, not causal effects. Full method, caveats, and citations: `reports/pilot_osi_v11/OUTCOMES_ES.md`. The full source archive and text-rich intermediates are excluded from Git; the public derived sample is minimized.

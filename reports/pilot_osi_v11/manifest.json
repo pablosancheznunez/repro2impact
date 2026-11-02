@@ -17,15 +17,22 @@
   "citation_snapshot_date": "2026-11-02",
   "api_batch_size": 50,
   "bootstrap_replicates": 1000,
-  "generated_utc": "2026-11-02T10:09:10.317217+00:00",
+  "generated_utc": "2026-11-02T10:19:28.710135+00:00",
   "sample_rows": 3424,
   "openalex_matched_rows": 3424,
   "license": "CC BY 4.0 (source dataset); derived sample contains DOI and article-level indicators only",
   "limitations": [
     "PLOS corpus only; publisher-specific and research-article selection bias",
     "OSI flags are automated indicators, not direct reproducibility audits",
-    "OpenAlex citation counts retrieved on 2026-11-02; year- and topic-adjusted model",
+    "OpenAlex citation counts retrieved on 2026-11-02; FWCI available only for a subset",
     "Observational association; no causal interpretation",
     "Comparator, altmetric and policy outcomes are not part of this citation pilot"
-  ]
+  ],
+  "citation_metrics": [
+    "cited_by_count",
+    "fwci",
+    "citation_normalized_percentile"
+  ],
+  "fwci_definition": "OpenAlex field-weighted citation impact, normalized by work type, publication year and subfield over a four-year citation window",
+  "fwci_rows": 3420
 }

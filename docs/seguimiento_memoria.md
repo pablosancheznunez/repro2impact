@@ -9,7 +9,7 @@
 | Revisión de literatura sobre reproducibilidad, bibliometría y altmetría | Parcial | Hay una actualización exploratoria y una estrategia de revisión; falta búsqueda sistemática multi-base, cribado duplicado y diagrama PRISMA. |
 | Índice de cuatro dimensiones | Prototipo | Código, plantilla y manual ahora alinean datos, código, documentación y política editorial. Pesos iguales son provisionales; validación externa con editores y Spanish Reproducibility Network no realizada. |
 | Preregistro OSF | Pendiente | No se ha depositado un preregistro. El piloto ya examinó resultados, así que debe mantenerse separado de cualquier análisis confirmatorio. |
-| Fuentes bibliométricas y citas normalizadas | Parcial | Piloto OSI v11/OpenAlex de 3.424 registros, años 2018–2021, citas acumuladas. No integra Web of Science, InCites o Dimensions; no tiene ventana fija ni percentiles normalizados oficiales. |
+| Fuentes bibliométricas y citas normalizadas | Parcial | Piloto OSI v11/OpenAlex de 3.424 registros, años 2018–2021, conteo bruto y FWCI (ventana OpenAlex de 4 años; cobertura ponderada 99,98%). No integra Web of Science, InCites o Dimensions ni compara definiciones entre proveedores. |
 | Muestra estratificada de 3.000–5.000 artículos | Parcial | Se alcanza el tamaño nominal (3.424) en un corpus editorial PLOS. No es la muestra multidisciplinar propuesta ni representa todo el marco de publicación. |
 | Codificación automatizada y validación manual | Parcial | Los indicadores OSI son detecciones automatizadas; no se ha realizado validación manual doble ni estimado acuerdo entre codificadores. |
 | Altmetrics, Wikipedia/medios y documentos de política | Pendiente | No hay datos en el piloto. Requiere fuentes y licencias/cobertura confirmadas; no inferir impacto social a partir de citas. |
@@ -24,7 +24,7 @@
 
 ## Resultado que puede comunicarse ahora
 
-La muestra PLOS v11 de 2018–2021 contiene 3.424 artículos y todos los DOI de la muestra se enlazaron con OpenAlex. En el modelo Poisson ponderado ajustado por año y campo, datos compartidos: razón de medias 1,12 (IC 95% 0,99–1,27); código compartido: 1,19 (1,05–1,34). Asociación observacional, con muestreo por estado de compartir datos/código; no es efecto causal ni evidencia de impacto social. El ajuste, intervalo y la cobertura de fuente deben acompañar siempre a estas cifras.
+La muestra PLOS v11 de 2018–2021 contiene 3.424 artículos y todos los DOI de la muestra se enlazaron con OpenAlex. En el modelo Poisson ponderado ajustado por año y campo, datos compartidos: razón de medias 1,12 (IC 95% 0,99–1,27); código compartido: 1,19 (1,05–1,34). La comparación descriptiva ponderada de FWCI dio razones sí/no de 1,12 (0,97–1,29) para datos y 1,16 (1,02–1,32) para código. Asociaciones observacionales, con muestreo por estado de compartir datos/código; no son efectos causales ni evidencia de impacto social. El ajuste, intervalo y cobertura de fuente deben acompañar siempre a estas cifras.
 
 ## Correcciones necesarias de la memoria
 
