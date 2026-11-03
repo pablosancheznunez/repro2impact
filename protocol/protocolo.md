@@ -153,7 +153,7 @@ Todos los análisis están en `R/analysis.R`, se ejecutan con `{targets}` y se p
 | 7–16 | Implementación y análisis | Muestra de 4.500 artículos; codificación manual de 450; tabla de políticas editoriales; análisis O2–O4; subestudio de reproducción |
 | 17–24 | Síntesis y transferencia | Artículos, *policy brief*, panel interactivo, datos con DOI |
 
-En IAMCR 2026 (mes 7–10) se presentará el diseño y el piloto. Los resultados principales se presentarán en Metascience 2027 e ISSI 2027.
+La difusión en congresos la planifica el equipo en un documento interno. Cualquier subestudio que se añada para una comunicación se incorporará a este protocolo y al prerregistro antes de recoger sus datos.
 
 ---
 

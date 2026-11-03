@@ -2,7 +2,7 @@
 # "no" or "unverifiable"; it is never summed with the others. The rules are
 # deliberately explicit so that every "yes" can be traced to its evidence.
 
-detector_version <- "1.0.0"
+detector_version <- "1.1.0"
 
 repo_pattern <- paste0(
   "(osf\\.io/[a-z0-9]{4,}|zenodo\\.org|doi\\.org/10\\.5281/zenodo|datadryad\\.org|",
@@ -28,7 +28,8 @@ prereg_pattern <- paste0(
 
 split_sentences <- function(text) {
   s <- unlist(strsplit(text, "(?<=[.!?;])\\s+(?=[A-ZÁÉÍÓÚ(\\[])", perl = TRUE))
-  s[nchar(s) > 0]
+  # Very long "sentences" are menus or metadata dumps, not prose.
+  s[nchar(s) > 0 & nchar(s) <= 800]
 }
 
 # Sentences matching all patterns, case-insensitive.
@@ -101,12 +102,15 @@ profile_article <- function(doi, text, links = datacite_links(doi), supplements 
     any(grepl(repo_pattern, supplements, ignore.case = TRUE))
   meta_code <- any(links$type %in% c("Software", "ComputationalNotebook")) ||
     any(grepl(code_host_pattern, supplements, ignore.case = TRUE))
-  if (meta_data && p$data_shared$value != "yes") {
-    p$data_shared <- list(value = "yes", evidence = paste("metadata:", paste(links$object_doi, collapse = " ")))
-  }
-  if (meta_code && p$code_shared$value != "yes") {
-    p$code_shared <- list(value = "yes", evidence = paste("metadata:", paste(links$object_doi, collapse = " ")))
-  }
+  # Publishers such as SAGE deposit every supplement in figshare as a
+  # "Dataset" (prefix 10.25384); it may be data or only extra tables, so the
+  # evidence says so and the manual validation measures how often it is data.
+  label <- if (nrow(links) && all(startsWith(links$object_doi, "10.25384/"))) {
+    "metadata (publisher supplement):"
+  } else "metadata:"
+  ev <- paste(label, paste(utils::head(links$object_doi, 5), collapse = " "))
+  if (meta_data && p$data_shared$value != "yes") p$data_shared <- list(value = "yes", evidence = ev)
+  if (meta_code && p$code_shared$value != "yes") p$code_shared <- list(value = "yes", evidence = ev)
   p
 }
 

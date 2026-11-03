@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use the REPRO2IMPACT study materials, data or code, please cite them as below."
+type: software
+title: "REPRO2IMPACT: transparency practices and the academic and social impact of research (study protocol, pipeline and data)"
+version: 0.1.0
+date-released: 2026-11-03
+authors:
+  - family-names: "Sánchez-Núñez"
+    given-names: "Pablo"
+    orcid: "https://orcid.org/0000-0001-7845-9506"
+    affiliation: "Universidad Carlos III de Madrid"
+repository-code: "https://github.com/pablosancheznunez/repro2impact"
+url: "https://pablosancheznunez.com/repro2impact/"
+license: MIT
+keywords:
+  - reproducibility
+  - open science
+  - metascience
+  - research assessment
+  - bibliometrics
+  - altmetrics
+  - CoARA
+abstract: >-
+  Protocol, preregistration draft, codebook and reproducible pipeline of the
+  REPRO2IMPACT study (Universidad Carlos III de Madrid): a stratified cohort of
+  articles in Psychology, Communication and Computational social science
+  (2016-2020) in which data, code, preregistration and materials sharing are
+  reported as a profile of separate indicators, with their association with
+  academic and social impact and a staggered difference-in-differences
+  analysis of journal policies. Code under MIT; data and documentation under
+  CC BY 4.0.

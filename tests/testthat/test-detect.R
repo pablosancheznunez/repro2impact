@@ -54,3 +54,19 @@ test_that("markup keeps link targets", {
   expect_match(x, "osf.io/qwe12")
   expect_false(grepl("var a", x))
 })
+
+test_that("JATS front matter and publisher menus do not produce indicators", {
+  xml <- paste0("<article><front><custom-meta-group><custom-meta>pmc-status-live yes</custom-meta>",
+                "<custom-meta>registered report</custom-meta></custom-meta-group></front>",
+                "<body><p>We analysed survey data.</p></body></article>")
+  expect_false(grepl("registered report", jats_text(xml)))
+  html <- paste0("<html><nav><ul><li>Registered reports</li><li>Open research</li></ul></nav>",
+                 "<article>", strrep("<p>Participants read texts and answered questions.</p>", 200),
+                 "</article></html>")
+  expect_equal(detect_text(strip_markup(article_region(html)))$preregistered$value, "no")
+})
+
+test_that("headings do not merge into the next sentence", {
+  s <- split_sentences(strip_markup("<h2>Data availability</h2><p>Data are at https://osf.io/abc12.</p>"))
+  expect_gte(length(s), 2)
+})

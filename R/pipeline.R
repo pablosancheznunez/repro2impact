@@ -6,7 +6,10 @@ collect_profiles <- function(articles, use_landing = TRUE) {
   links <- vector("list", nrow(articles))
   for (i in seq_len(nrow(articles))) {
     a <- articles[i, ]
-    ft <- get_fulltext(a$doi, a$pmcid, a$oa_url, use_landing = use_landing)
+    # One unreadable source must not stop the run: it only makes the text
+    # indicators of that article unverifiable.
+    ft <- tryCatch(get_fulltext(a$doi, a$pmcid, a$oa_url, use_landing = use_landing),
+                   error = function(e) list(text = NA_character_, source = "unavailable"))
     lk <- datacite_links(a$doi)
     sup <- crossref_supplement(a$doi)
     rows[[i]] <- profile_to_row(a$doi, profile_article(a$doi, ft$text, lk, sup), ft$source)
@@ -34,7 +37,9 @@ read_policies <- function(path = "data-raw/journal_policies.csv") {
 write_outputs <- function(frame, prevalence_tab, assoc, sensitivity, did, links,
                           hetero = data.frame(), reuse = data.frame(), dir = "outputs") {
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  public <- frame[, setdiff(names(frame), c("altmetric", "policy"))]
+  # Licensed sources are used in the analysis but not redistributed.
+  licensed <- c("altmetric", "policy", "wos_citations", "dim_citations", "dim_fcr", "dim_rcr", "cnci")
+  public <- frame[, setdiff(names(frame), licensed)]
   utils::write.csv(public, file.path(dir, "articles.csv"), row.names = FALSE, na = "")
   utils::write.csv(prevalence_tab, file.path(dir, "prevalence.csv"), row.names = FALSE, na = "")
   utils::write.csv(assoc, file.path(dir, "associations.csv"), row.names = FALSE, na = "")

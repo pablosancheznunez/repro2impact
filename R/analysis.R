@@ -13,6 +13,9 @@ build_analysis_frame <- function(articles, profiles) {
   df
 }
 
+# Below this many exposed (or unexposed) articles no estimate is reported.
+min_group <- 10L
+
 covariate_terms <- c("is_oa", "log_authors", "international", "log_refs",
                      "funded", "log_institutions")
 
@@ -24,18 +27,20 @@ wilson <- function(x, n, conf = 0.95) {
   data.frame(p = p, lo = centre - half, hi = centre + half)
 }
 
-# O2: prevalence by stratum and year; unverifiable cases are counted, not
-# placed in the denominator.
+# O2: prevalence by stratum, year and open access status (the dashboard
+# filters on all three); unverifiable cases are counted, not placed in the
+# denominator.
 prevalence <- function(df, indicators = study_config()$indicators) {
+  oa <- if ("is_oa" %in% names(df)) ifelse(df$is_oa, "open", "closed") else rep("all", nrow(df))
   out <- list()
   for (ind in indicators) {
-    for (key in split(seq_len(nrow(df)), list(df$stratum, df$year), drop = TRUE)) {
+    for (key in split(seq_len(nrow(df)), list(df$stratum, df$year, oa), drop = TRUE)) {
       v <- df[[ind]][key]
       yes <- sum(v == "yes", na.rm = TRUE)
       n <- sum(v %in% c("yes", "no"))
       w <- wilson(yes, n)
       out[[length(out) + 1]] <- data.frame(
-        indicator = ind, stratum = df$stratum[key[1]], year = df$year[key[1]],
+        indicator = ind, stratum = df$stratum[key[1]], year = df$year[key[1]], access = oa[key[1]],
         yes = yes, n_verifiable = n, n_unverifiable = sum(v == "unverifiable", na.rm = TRUE),
         prevalence = w$p, lo = w$lo, hi = w$hi)
     }
@@ -63,7 +68,7 @@ fit_association <- function(df, indicator, outcome = "cit_5y", random_journal = 
   na_row <- data.frame(indicator = indicator, outcome = outcome, method = method,
                        rr = NA, lo = NA, hi = NA, p = NA, n = nrow(d),
                        n_exposed = sum(d$exposed), n_unverifiable = n_unver)
-  if (sum(d$exposed) < 3 || sum(d$exposed) > nrow(d) - 3 || all(d[[outcome]] == 0)) return(na_row)
+  if (sum(d$exposed) < min_group || sum(d$exposed) > nrow(d) - min_group || all(d[[outcome]] == 0)) return(na_row)
   m <- tryCatch(suppressWarnings(
     if (hurdle) glmmTMB::glmmTMB(f, data = d, family = glmmTMB::truncated_nbinom2(), ziformula = ~ exposed)
     else glmmTMB::glmmTMB(f, data = d, family = glmmTMB::nbinom2())),
@@ -91,7 +96,7 @@ fit_matched <- function(df, indicator, outcome = "cit_5y") {
                        n_unverifiable = NA, max_smd = NA)
   if (is.null(mm)) return(na_row)
   md <- MatchIt::match.data(mm)
-  if (sum(md$exposed) < 5) return(na_row)
+  if (sum(md$exposed) < min_group) return(na_row)
   bal <- cobalt::bal.tab(mm, un = FALSE)$Balance
   fit <- tryCatch(MASS::glm.nb(stats::as.formula(paste(outcome, "~ exposed")),
                                data = md, weights = md$weights), error = function(e) NULL)
@@ -102,6 +107,84 @@ fit_matched <- function(df, indicator, outcome = "cit_5y") {
              hi = exp(co[[1]] + 1.96 * co[[2]]), p = co[[4]],
              n = nrow(md), n_exposed = sum(md$exposed), n_unverifiable = NA,
              max_smd = max(abs(bal$Diff.Adj), na.rm = TRUE))
+}
+
+# Poisson pseudo-likelihood with field x year fixed effects and errors
+# clustered by journal: consistent for rate ratios even under
+# overdispersion. Used as a robustness check and as the outcome model for
+# the weighting estimators below.
+fit_poisson <- function(df, indicator, outcome = "cit_5y", weights = NULL,
+                        method = "poisson", adjust = TRUE) {
+  d <- if (is.null(weights)) indicator_subset(df, indicator, outcome) else df
+  rhs <- c("exposed", if (adjust) covariate_terms)
+  f <- stats::as.formula(paste(outcome, "~", paste(rhs, collapse = " + "), "| cell"))
+  na_row <- data.frame(indicator = indicator, outcome = outcome, method = method,
+                       rr = NA, lo = NA, hi = NA, p = NA, n = nrow(d),
+                       n_exposed = sum(d$exposed), n_unverifiable = NA)
+  if (sum(d$exposed) < min_group || all(d[[outcome]] == 0)) return(na_row)
+  m <- tryCatch(suppressMessages(fixest::fepois(f, data = d, weights = weights,
+                                                cluster = ~journal_id)),
+                error = function(e) NULL)
+  if (is.null(m) || !"exposed" %in% names(stats::coef(m))) return(na_row)
+  ct <- fixest::coeftable(m)["exposed", ]
+  data.frame(indicator = indicator, outcome = outcome, method = method,
+             rr = exp(ct[[1]]), lo = exp(ct[[1]] - 1.96 * ct[[2]]),
+             hi = exp(ct[[1]] + 1.96 * ct[[2]]), p = ct[[4]],
+             n = stats::nobs(m), n_exposed = sum(d$exposed), n_unverifiable = NA)
+}
+
+covariate_matrix <- function(d) {
+  X <- stats::model.matrix(stats::as.formula(paste("~", paste(c(covariate_terms, "cell"), collapse = " + "))), d)
+  X[, colnames(X) != "(Intercept)" & apply(X, 2, stats::sd) > 0, drop = FALSE]
+}
+
+# Stabilised inverse probability weights (ATE), trimmed at the 1st and
+# 99th percentiles.
+ipw_weights <- function(d) {
+  ps <- stats::fitted(stats::glm(stats::as.formula(paste(
+    "exposed ~", paste(c(covariate_terms, "cell"), collapse = " + "))), data = d, family = stats::binomial()))
+  p1 <- mean(d$exposed)
+  w <- ifelse(d$exposed == 1, p1 / ps, (1 - p1) / (1 - ps))
+  q <- stats::quantile(w, c(.01, .99))
+  pmin(pmax(w, q[[1]]), q[[2]])
+}
+
+# Entropy balancing (Hainmueller 2012), ATT: control weights that reproduce
+# the treated means of every covariate exactly, closest to uniform.
+ebal_weights <- function(d) {
+  X <- scale(covariate_matrix(d))
+  X[is.na(X)] <- 0
+  t <- d$exposed == 1
+  target <- colMeans(X[t, , drop = FALSE])
+  Xc <- X[!t, , drop = FALSE]
+  dual <- function(l) log(sum(exp(Xc %*% l))) - sum(l * target)
+  grad <- function(l) { e <- exp(Xc %*% l); as.numeric(crossprod(Xc, e) / sum(e)) - target }
+  opt <- stats::optim(rep(0, ncol(X)), dual, grad, method = "BFGS", control = list(maxit = 500))
+  wc <- as.numeric(exp(Xc %*% opt$par)); wc <- wc / sum(wc) * sum(!t)
+  w <- rep(1, nrow(d)); w[!t] <- wc
+  attr(w, "max_imbalance") <- max(abs(colSums(Xc * wc) / sum(wc) - target))
+  w
+}
+
+fit_weighted <- function(df, indicator, outcome = "cit_5y", method = c("ipw", "ebal")) {
+  method <- match.arg(method)
+  d <- indicator_subset(df, indicator, outcome)
+  d <- d[stats::complete.cases(d[, covariate_terms]), ]
+  if (sum(d$exposed) < min_group || sum(1 - d$exposed) < min_group) {
+    return(data.frame(indicator = indicator, outcome = outcome, method = method,
+                      rr = NA, lo = NA, hi = NA, p = NA, n = nrow(d),
+                      n_exposed = sum(d$exposed), n_unverifiable = NA, max_smd = NA))
+  }
+  w <- tryCatch(if (method == "ipw") ipw_weights(d) else ebal_weights(d), error = function(e) NULL)
+  if (is.null(w)) {
+    return(data.frame(indicator = indicator, outcome = outcome, method = method,
+                      rr = NA, lo = NA, hi = NA, p = NA, n = nrow(d),
+                      n_exposed = sum(d$exposed), n_unverifiable = NA, max_smd = NA))
+  }
+  # Doubly robust: the weighted outcome model still adjusts for covariates.
+  r <- fit_poisson(d, indicator, outcome, weights = as.numeric(w), method = method)
+  r$max_smd <- attr(w, "max_imbalance") %||% NA
+  r
 }
 
 # VanderWeele & Ding (2017) E-value for a rate ratio and its CI bound
@@ -119,6 +202,9 @@ association_table <- function(df, outcomes = "cit_5y",
   for (o in outcomes) for (ind in study_config()$indicators) {
     rows[[length(rows) + 1]] <- fit_association(df, ind, o)
     rows[[length(rows) + 1]] <- fit_matched(df, ind, o)
+    rows[[length(rows) + 1]] <- fit_poisson(df, ind, o)
+    rows[[length(rows) + 1]] <- fit_weighted(df, ind, o, "ipw")
+    rows[[length(rows) + 1]] <- fit_weighted(df, ind, o, "ebal")
   }
   res <- do.call(rbind, lapply(rows, function(r) { if (!"max_smd" %in% names(r)) r$max_smd <- NA; r }))
   ev <- t(mapply(evalue, res$rr, res$lo, res$hi))

@@ -44,7 +44,17 @@ Sys.setenv(REPRO2IMPACT_PHASE = "main"); targets::tar_make()  # main study: 300 
 testthat::test_dir("tests/testthat")                          # detectors and analyses, offline
 ```
 
-Optional keys, read from environment variables: `OPENALEX_API_KEY` (larger daily budget), `ALTMETRIC_KEY` and `OVERTON_KEY`. Without them the corresponding outcomes are missing, never zero. Every API response is cached in `data/cache/`, so a run can be repeated and audited offline. Journal policies are curated by hand in [`data-raw/journal_policies.csv`](data-raw/journal_policies.csv); only rows with a source URL enter the analysis.
+Optional institutional access, read from environment variables (without them the corresponding values are missing, never zero, and licensed values are never redistributed):
+
+| Variable | Source |
+| --- | --- |
+| `OPENALEX_API_KEY` | Larger OpenAlex daily budget |
+| `REPRO2IMPACT_TDM=true`, `ELSEVIER_API_KEY`, `WILEY_TDM_TOKEN` | Publisher text-and-data-mining through Crossref links, with the UC3M subscription; run it from the UC3M network |
+| `WOS_STARTER_KEY` | Web of Science citations |
+| `INCITES_EXPORT` | Path to an InCites document-level export with CNCI |
+| `DIMENSIONS_KEY` | Dimensions citations and field citation ratio |
+| `ALTMETRIC_KEY` | Altmetric Attention Score |
+| `OVERTON_KEY` | Mentions in policy documents | Every API response is cached in `data/cache/`, so a run can be repeated and audited offline. Journal policies are curated by hand in [`data-raw/journal_policies.csv`](data-raw/journal_policies.csv); only rows with a source URL enter the analysis.
 
 ## Principles
 

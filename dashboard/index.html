@@ -42,6 +42,7 @@ a{color:var(--accent)}
   <div class="controls">
     <label>Indicador <select id="ind"></select></label>
     <label>Campo <select id="str"></select></label>
+    <label>Acceso <select id="acc"><option value="all">Todos</option><option value="open">Abierto</option><option value="closed">Cerrado</option></select></label>
   </div>
   <div class="card"><svg id="chart" width="100%" height="260" role="img" aria-label="Prevalencia por año con intervalo de confianza"></svg>
   <p class="note" id="chartnote"></p></div>
@@ -70,9 +71,9 @@ fetch("results.json").then(r=>r.json()).then(d=>{
     [d.detector_version,"versión de los detectores"],
     [d.generated,"fecha de los datos"]].map(([b,s])=>`<div class="card kpi"><b>${b}</b><span>${s}</span></div>`).join("");
   function draw(){
-    const k=ind.value, s=str.value, years=d.config.years;
+    const k=ind.value, s=str.value, ac=acc.value, years=d.config.years;
     const rows=years.map(y=>{
-      const r=prev.filter(p=>p.indicator===k&&p.year===y&&(s==="all"||p.stratum===s));
+      const r=prev.filter(p=>p.indicator===k&&p.year===y&&(s==="all"||p.stratum===s)&&(ac==="all"||p.access===ac));
       const yes=r.reduce((a,b)=>a+b.yes,0), n=r.reduce((a,b)=>a+b.n_verifiable,0), u=r.reduce((a,b)=>a+b.n_unverifiable,0);
       const p=n?yes/n:null, z=1.96, c=n?(p+z*z/(2*n))/(1+z*z/n):null, h=n?z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/(1+z*z/n):null;
       return {y,p,lo:n?c-h:null,hi:n?c+h:null,n,u};
@@ -92,7 +93,8 @@ fetch("results.json").then(r=>r.json()).then(d=>{
     const tn=rows.reduce((a,b)=>a+b.n,0), tu=rows.reduce((a,b)=>a+b.u,0);
     document.getElementById("chartnote").textContent=`Banda: IC de Wilson al 95 %. Verificables: ${tn}; no verificables (fuera del denominador): ${tu}.`;
   }
-  ind.onchange=str.onchange=draw; draw(); addEventListener("resize",draw);
+  const acc=document.getElementById("acc");
+  ind.onchange=str.onchange=acc.onchange=draw; draw(); addEventListener("resize",draw);
   const a=(d.associations||[]).filter(r=>r.outcome==="cit_5y");
   const f=v=>v==null?"–":(+v).toFixed(2);
   document.getElementById("assoc").innerHTML="<tr><th>Práctica</th><th>Método</th><th>RR</th><th>IC 95 %</th><th>n (expuestos)</th><th>E-value</th><th></th></tr>"+

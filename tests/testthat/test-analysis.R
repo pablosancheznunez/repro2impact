@@ -113,3 +113,31 @@ test_that("review records deduplicate by DOI and title", {
   expect_equal(nrow(m), 2)
   expect_equal(m$sources[1], "openalex;wos")
 })
+
+test_that("Poisson, IPW and entropy balancing recover a known rate ratio", {
+  d <- simulate_study(n = 3000, rr_data = 1.5, seed = 21)
+  for (r in list(fit_poisson(d, "data_shared"), fit_weighted(d, "data_shared", method = "ipw"),
+                 fit_weighted(d, "data_shared", method = "ebal"))) {
+    expect_true(r$lo < 1.5 && r$hi > 1.5, info = r$method)
+  }
+})
+
+test_that("entropy balancing matches the treated covariate means", {
+  d <- indicator_subset(simulate_study(n = 2000, seed = 22), "data_shared", "cit_5y")
+  w <- ebal_weights(d)
+  expect_lt(attr(w, "max_imbalance"), 1e-3)
+})
+
+test_that("Poisson, IPW and entropy balancing recover a known rate ratio", {
+  d <- simulate_study(n = 3000, rr_data = 1.5, seed = 21)
+  for (r in list(fit_poisson(d, "data_shared"), fit_weighted(d, "data_shared", method = "ipw"),
+                 fit_weighted(d, "data_shared", method = "ebal"))) {
+    expect_true(r$lo < 1.5 && r$hi > 1.5, info = r$method)
+  }
+})
+
+test_that("entropy balancing matches the treated covariate means", {
+  d <- indicator_subset(simulate_study(n = 2000, seed = 22), "data_shared", "cit_5y")
+  w <- ebal_weights(d)
+  expect_lt(attr(w, "max_imbalance"), 1e-3)
+})
