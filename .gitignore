@@ -1,0 +1,6 @@
+_targets/
+data/cache/
+.Rhistory
+.Rproj.user
+internal/
+dissemination/congresos*

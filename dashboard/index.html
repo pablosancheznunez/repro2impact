@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REPRO2IMPACT · Panel</title>
+<meta name="description" content="Prácticas de transparencia e impacto de la investigación: prevalencia por campo y año y asociación con citas. Sin puntuación agregada.">
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--muted:#5f5e5a;--line:#e3e1da;--card:#fff;--accent:#2b5c8a;--accent2:#c2410c;--band:rgba(43,92,138,.14)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--fg:#ecebe6;--muted:#a8a69f;--line:#33322f;--card:#1e1e1c;--accent:#7fb0dc;--accent2:#f0915a;--band:rgba(127,176,220,.18)}}
+:root[data-theme="dark"]{--bg:#151514;--fg:#ecebe6;--muted:#a8a69f;--line:#33322f;--card:#1e1e1c;--accent:#7fb0dc;--accent2:#f0915a;--band:rgba(127,176,220,.18)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:1.6rem;margin:0 0 4px}
+h2{font-size:1.15rem;margin:40px 0 8px}
+p.lead{color:var(--muted);margin:0 0 24px;max-width:70ch}
+.note{font-size:.9rem;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0 16px}
+label{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.85rem;color:var(--muted)}
+svg text{fill:var(--muted);font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+a{color:var(--accent)}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.75rem;border:1px solid var(--line);color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>REPRO2IMPACT</h1>
+  <p class="lead">Prácticas de transparencia (datos, código, prerregistro, materiales) en artículos de Psicología, Comunicación y Ciencias sociales computacionales, 2016–2020, y su asociación con el impacto. Cada indicador se presenta por separado: <strong>no hay puntuación agregada</strong>. Los artículos cuyo texto no se pudo consultar cuentan como «no verificables», nunca como «no».</p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <h2>Prevalencia por año</h2>
+  <div class="controls">
+    <label>Indicador <select id="ind"></select></label>
+    <label>Campo <select id="str"></select></label>
+    <label>Acceso <select id="acc"><option value="all">Todos</option><option value="open">Abierto</option><option value="closed">Cerrado</option></select></label>
+  </div>
+  <div class="card"><svg id="chart" width="100%" height="260" role="img" aria-label="Prevalencia por año con intervalo de confianza"></svg>
+  <p class="note" id="chartnote"></p></div>
+
+  <h2>Asociación con las citas a cinco años</h2>
+  <p class="note">Razón de tasas (RR) de cada práctica, ajustada por campo × año, acceso abierto, autoría, colaboración internacional, referencias, financiación e instituciones, con la revista como efecto aleatorio (NB-GLMM) y, como robustez, emparejamiento por propensión (PSM). Es una asociación, no un efecto causal; el E-value indica cuán fuerte tendría que ser un confusor no medido para anularla.</p>
+  <div class="card"><table id="assoc"></table></div>
+
+  <h2>Descargas</h2>
+  <p><a href="../outputs/prevalence.csv">prevalence.csv</a> · <a href="../outputs/associations.csv">associations.csv</a> · <a href="../outputs/articles.csv">articles.csv</a> · <a href="results.json">results.json</a></p>
+  <p class="note" id="meta"></p>
+</main>
+<script>
+const LABELS={data_statement:"Declaración de datos",data_shared:"Datos compartidos",code_shared:"Código compartido",preregistered:"Prerregistro",materials_shared:"Materiales compartidos"};
+const FIELDS={psychology:"Psicología",communication:"Comunicación",computational_social_science:"C. sociales computacionales"};
+const pct=x=>x==null?"–":(100*x).toFixed(1)+" %";
+fetch("results.json").then(r=>r.json()).then(d=>{
+  const prev=d.prevalence, ind=document.getElementById("ind"), str=document.getElementById("str");
+  Object.entries(LABELS).forEach(([k,v])=>ind.add(new Option(v,k)));
+  str.add(new Option("Todos","all"));
+  Object.entries(FIELDS).forEach(([k,v])=>str.add(new Option(v,k)));
+  const cov=d.coverage||{}, verif=d.n_articles-(cov.unavailable||0);
+  document.getElementById("kpis").innerHTML=[
+    [d.n_articles,"artículos en la muestra"],
+    [pct(verif/d.n_articles),"con texto completo verificable"],
+    [d.detector_version,"versión de los detectores"],
+    [d.generated,"fecha de los datos"]].map(([b,s])=>`<div class="card kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+  function draw(){
+    const k=ind.value, s=str.value, ac=acc.value, years=d.config.years;
+    const rows=years.map(y=>{
+      const r=prev.filter(p=>p.indicator===k&&p.year===y&&(s==="all"||p.stratum===s)&&(ac==="all"||p.access===ac));
+      const yes=r.reduce((a,b)=>a+b.yes,0), n=r.reduce((a,b)=>a+b.n_verifiable,0), u=r.reduce((a,b)=>a+b.n_unverifiable,0);
+      const p=n?yes/n:null, z=1.96, c=n?(p+z*z/(2*n))/(1+z*z/n):null, h=n?z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/(1+z*z/n):null;
+      return {y,p,lo:n?c-h:null,hi:n?c+h:null,n,u};
+    });
+    const svg=document.getElementById("chart"), W=svg.clientWidth||600, H=260, m={l:44,r:12,t:12,b:28};
+    const ymax=Math.max(0.1,...rows.map(r=>r.hi||0)), x=i=>m.l+(W-m.l-m.r)*(i/(years.length-1)), y=v=>H-m.b-(H-m.t-m.b)*(v/ymax);
+    let g="";
+    for(let t=0;t<=4;t++){const v=ymax*t/4;g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${Math.round(v*100)}%</text>`}
+    years.forEach((yr,i)=>g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${yr}</text>`);
+    const ok=rows.map((r,i)=>[r,i]).filter(([r])=>r.p!=null);
+    if(ok.length>1){
+      g+=`<path d="M${ok.map(([r,i])=>`${x(i)},${y(r.hi)}`).join("L")}L${ok.slice().reverse().map(([r,i])=>`${x(i)},${y(r.lo)}`).join("L")}Z" fill="var(--band)"/>`;
+      g+=`<path d="M${ok.map(([r,i])=>`${x(i)},${y(r.p)}`).join("L")}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+    }
+    ok.forEach(([r,i])=>g+=`<circle cx="${x(i)}" cy="${y(r.p)}" r="4" fill="var(--accent)"><title>${r.y}: ${pct(r.p)} (IC ${pct(r.lo)}–${pct(r.hi)}), n=${r.n}</title></circle>`);
+    svg.innerHTML=g;
+    const tn=rows.reduce((a,b)=>a+b.n,0), tu=rows.reduce((a,b)=>a+b.u,0);
+    document.getElementById("chartnote").textContent=`Banda: IC de Wilson al 95 %. Verificables: ${tn}; no verificables (fuera del denominador): ${tu}.`;
+  }
+  const acc=document.getElementById("acc");
+  ind.onchange=str.onchange=acc.onchange=draw; draw(); addEventListener("resize",draw);
+  const a=(d.associations||[]).filter(r=>r.outcome==="cit_5y");
+  const f=v=>v==null?"–":(+v).toFixed(2);
+  document.getElementById("assoc").innerHTML="<tr><th>Práctica</th><th>Método</th><th>RR</th><th>IC 95 %</th><th>n (expuestos)</th><th>E-value</th><th></th></tr>"+
+    a.map(r=>`<tr><td>${LABELS[r.indicator]}</td><td>${r.method==="psm"?"PSM":"NB-GLMM"}</td><td>${f(r.rr)}</td><td>${f(r.lo)}–${f(r.hi)}</td><td>${r.n??"–"} (${r.n_exposed??"–"})</td><td>${f(r.evalue_point)}</td><td>${r.confirmatory?'<span class="badge">confirmatoria</span>':""}</td></tr>`).join("");
+  document.getElementById("meta").textContent=`Protocolo v${d.config.version}. Diferencias en diferencias de políticas editoriales: ${d.policy_did}.`;
+}).catch(()=>{document.getElementById("kpis").innerHTML='<p class="note">Aún no hay resultados publicados.</p>'});
+</script>
+</body>
+</html>

@@ -15,6 +15,47 @@ REPRO2IMPACT develops open, transparent and verifiable ways of documenting repro
 | **Narrative CV Crosswalk** | Links the sections of narrative CVs (R4RI, Spanish CVA) to the evidence held by ORCID, OpenAlex, DataCite and OpenAIRE, showing what infrastructures can document and what only the researcher can tell; web tool and R package | [Web tool](https://pablosancheznunez.com/narrative-cv-crosswalk/) · [R package](https://pablosancheznunez.com/narrative-cv-crosswalk/r/) · [Code](https://github.com/pablosancheznunez/narrative-cv-crosswalk) | [10.5281/zenodo.23881631](https://doi.org/10.5281/zenodo.23881631) |
 | **research-tools-ops** | Shared maintenance that keeps the tools working with minimal human time while every scientific change waits for review | [Code](https://github.com/pablosancheznunez/research-tools-ops) | [10.5281/zenodo.23881629](https://doi.org/10.5281/zenodo.23881629) |
 
+## Empirical study
+
+Do transparency practices that make research reproducible (open data, open code, preregistration, open materials) go with more academic and social impact, and do journal policies change them? The study follows the approved proposal, with the design revised so that it measures what it claims:
+
+- **A profile, not an index.** Each practice is reported on its own; a composite appears only as a sensitivity analysis over random weightings.
+- **Potential vs actual reproducibility.** The profile measures *conditions* for reproducibility; a reproduction substudy of 40 articles measures how often they hold.
+- **Association vs effect.** Article-level comparisons are adjusted associations with E-values; causal language is kept for the staggered difference-in-differences on journal policies.
+- **Unverifiable is not no.** Articles whose full text cannot be read are reported apart, never counted as not sharing.
+
+| Document | Content |
+| --- | --- |
+| [Protocolo](protocol/protocolo.md) | Full study protocol (Spanish), with every change from the proposal and its reason |
+| [Preregistration](protocol/preregistration.md) | Draft for OSF: hypotheses H1–H4, analysis plan, inference criteria |
+| [Libro de códigos](protocol/codebook.md) | Manual coding instrument and agreement threshold (κ ≥ 0.70) |
+| [Reproducción](protocol/reproduction.md) | Computational reproduction substudy |
+| [Revisión sistemática](protocol/revision-sistematica.md) | PRISMA 2020 review of transparency and impact (phase 1) |
+| [Validación con expertos](protocol/validacion-expertos.md) | Two-round Delphi on the content validity of each indicator |
+| [Gestión de datos](protocol/plan-gestion-datos.md) | Data management plan, FAIR, licences and DPIA screening |
+| [Data dictionary](outputs/README.md) | Every column of every output file |
+| [Panel](https://pablosancheznunez.com/repro2impact/dashboard/) | Prevalence by field and year and associations with citations |
+
+**Run it.** R ≥ 4.3 with `targets`, `httr2`, `jsonlite`, `digest`, `glmmTMB`, `MASS`, `MatchIt`, `cobalt` and `fixest`:
+
+```r
+targets::tar_make()                                           # pilot: 20 articles per field x year
+Sys.setenv(REPRO2IMPACT_PHASE = "main"); targets::tar_make()  # main study: 300 per cell
+testthat::test_dir("tests/testthat")                          # detectors and analyses, offline
+```
+
+Optional institutional access, read from environment variables (without them the corresponding values are missing, never zero, and licensed values are never redistributed):
+
+| Variable | Source |
+| --- | --- |
+| `OPENALEX_API_KEY` | Larger OpenAlex daily budget |
+| `REPRO2IMPACT_TDM=true`, `ELSEVIER_API_KEY`, `WILEY_TDM_TOKEN` | Publisher text-and-data-mining through Crossref links, with the UC3M subscription; run it from the UC3M network |
+| `WOS_STARTER_KEY` | Web of Science citations |
+| `INCITES_EXPORT` | Path to an InCites document-level export with CNCI |
+| `DIMENSIONS_KEY` | Dimensions citations and field citation ratio |
+| `ALTMETRIC_KEY` | Altmetric Attention Score |
+| `OVERTON_KEY` | Mentions in policy documents | Every API response is cached in `data/cache/`, so a run can be repeated and audited offline. Journal policies are curated by hand in [`data-raw/journal_policies.csv`](data-raw/journal_policies.csv); only rows with a source URL enter the analysis.
+
 ## Principles
 
 - **Responsible assessment.** Aligned with the San Francisco Declaration on Research Assessment (DORA) and the Agreement on Reforming Research Assessment (CoARA): indicators support qualitative judgement and never replace it.
